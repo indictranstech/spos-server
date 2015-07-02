@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 import frappe
 import frappe.defaults
-from frappe.utils import cint, cstr, flt
+from frappe.utils import cstr, flt,cint, get_datetime, get_time, getdate,nowdate
 from frappe.defaults import get_user_permissions
-
+import json
 
 
 @frappe.whitelist(allow_guest=True)
@@ -65,4 +65,15 @@ def get_item_list(sales_user):
 
 @frappe.whitelist(allow_guest=True)
 def get_permissions():
-	return 	get_user_permissions()
+	return nowdate()
+
+
+@frappe.whitelist(allow_guest=True)
+def create_sales_order(my_key):
+	my_key = json.loads(my_key)
+	so_doc = frappe.new_doc("Sales Order")
+	order_dict = my_key.values()[0]
+	order_dict["delivery_date"] =  nowdate()
+	so_doc.update(order_dict)
+	so_doc.flags.ignore_permissions = 1
+	so_doc.submit()		

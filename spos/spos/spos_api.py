@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 import frappe
 import frappe.defaults
-from frappe.utils import cint, cstr, flt
+from frappe.utils import cstr, flt,cint, get_datetime, get_time, getdate,nowdate
 from frappe.defaults import get_user_permissions
-
+import json
 
 
 @frappe.whitelist(allow_guest=True)
@@ -64,5 +64,53 @@ def get_item_list(sales_user):
 
 
 @frappe.whitelist(allow_guest=True)
-def get_permissions():
-	return 	get_user_permissions()
+def create_so_and_po(order_dict,email):
+	frappe.session.user = json.loads(email)
+	so_flag = create_sales_order(order_dict)
+	po_flag = create_purchase_order(order_dict)
+	if so_flag == True and po_flag == True:
+		return "success"
+	else:
+		return "fail"	
+
+@frappe.whitelist(allow_guest=True)
+def create_sales_order(order_dict):
+	return_flag = False
+	order = json.loads(order_dict)
+	if not frappe.db.get_value("Sales Order",{"pos_timestamp":order.keys()[0]},"name"):
+		so_doc = frappe.new_doc("Sales Order")
+		order_dict = order.values()[0]
+		order_dict["delivery_date"] =  nowdate()
+		order_dict["pos_timestamp"] = order.keys()[0]
+		so_doc.update(order_dict)
+		so_doc.flags.ignore_permissions = 1
+		so_doc.submit()
+		return_flag = True
+	return return_flag
+
+
+@frappe.whitelist(allow_guest=True)
+def create_purchase_order(order_dict):
+	return_flag = False
+	order = json.loads(order_dict)
+	if not frappe.db.get_value("Purchase Order",{"pos_timestamp":order.keys()[0]},"name"):
+		po_doc = frappe.new_doc("Purchase Order")
+		order_dict = order.values()[0]
+		order_dict = add_req_by_date_in_child_table(order_dict)
+		order_dict["pos_timestamp"] = order.keys()[0]
+		po_doc.update(order_dict)
+		po_doc.flags.ignore_permissions = 1
+		po_doc.submit()
+		return_flag = True
+	return return_flag		
+
+			
+@frappe.whitelist(allow_guest=True)
+def add_req_by_date_in_child_table(order_dict):
+	child_list = order_dict.get("items")
+	for child in child_list:
+		child["schedule_date"] = nowdate()
+		child["uom"] = "Nos"
+		child["conversion_factor"] = 1
+	order_dict["items"] = child_list
+	return order_dict

@@ -10,6 +10,9 @@ app_color = "grey"
 app_email = "saurabh.p@indictranstech.com"
 app_version = "0.0.1"
 
+
+
+fixtures = ['Custom Field', 'Property Setter']
 # Includes in <head>
 # ------------------
 

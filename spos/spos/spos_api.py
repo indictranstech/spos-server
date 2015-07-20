@@ -98,7 +98,14 @@ def create_sales_order(order_dict):
 		order_dict["pos_timestamp"] = order.keys()[0]
 		so_doc.update(order_dict)
 		so_doc.flags.ignore_permissions = 1
-		so_doc.submit()
+		try:
+			print "in so try block"
+			so_doc.submit()
+		except Exception,e:
+			print "in so except block"
+			print e
+			raise e
+		print "after so try except"	
 		args = {
 			'customer': order_dict["customer"],
 			'title': "Sales Order Confirmation",
@@ -120,7 +127,14 @@ def create_purchase_order(order_dict):
 		order_dict.pop("selling_price_list",None)
 		po_doc.update(order_dict)
 		po_doc.flags.ignore_permissions = 1
-		po_doc.submit()
+		try:
+			print "in po try block"
+			po_doc.submit()
+		except Exception,e:
+			print "in po except block"
+			print e
+			raise e
+		print "after po try except"	
 		args = {
 			'vendor': order_dict["supplier"],
 			'title': "Purchase Order Confirmation",
@@ -173,3 +187,7 @@ def create_spos_sync_record():
 	sr_doc.sync_date = nowdate()
 	sr_doc.sync_start_time = now_datetime().strftime("%H:%M:%S")
 	sr_doc.save(ignore_permissions=1)
+
+@frappe.whitelist(allow_guest=True)
+def check_for_connectivity():
+	return "success"	

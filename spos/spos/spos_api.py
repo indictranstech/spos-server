@@ -28,8 +28,8 @@ def get_customer_list(cust_list):
 	result = []
 	sales_user_cond = ''
 	if cust_list:
-		sales_user_cond = "where name in ({0})".format(','.join('"{0}"'.format(customer) for customer in cust_list))
-	result = frappe.db.sql("select name as customer_id,customer_name from `tabCustomer` {0}".format(sales_user_cond),as_dict=1)
+		sales_user_cond = "where cu.name in ({0})".format(','.join('"{0}"'.format(customer) for customer in cust_list))
+	result = frappe.db.sql("select cu.name as customer_id,cu.customer_name, ifnull((select concat_ws('\n',ad.address_line1,ad.address_line2,ad.city,ad.state,ad.pincode,ad.country,ad.email_id,ad.phone) from `tabAddress` as ad where  cu.name = ad.customer and ad.is_shipping_address = 1 limit 1 ),'')as cust_address from `tabCustomer` as cu {0}".format(sales_user_cond),as_dict=1)
 	return result
 
 @frappe.whitelist(allow_guest=True)
@@ -99,13 +99,9 @@ def create_sales_order(order_dict):
 		so_doc.update(order_dict)
 		so_doc.flags.ignore_permissions = 1
 		try:
-			print "in so try block"
 			so_doc.submit()
 		except Exception,e:
-			print "in so except block"
-			print e
 			raise e
-		print "after so try except"	
 		args = {
 			'customer': order_dict["customer"],
 			'title': "Sales Order Confirmation",
@@ -128,13 +124,9 @@ def create_purchase_order(order_dict):
 		po_doc.update(order_dict)
 		po_doc.flags.ignore_permissions = 1
 		try:
-			print "in po try block"
 			po_doc.submit()
 		except Exception,e:
-			print "in po except block"
-			print e
 			raise e
-		print "after po try except"	
 		args = {
 			'vendor': order_dict["supplier"],
 			'title': "Purchase Order Confirmation",

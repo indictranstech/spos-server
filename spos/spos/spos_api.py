@@ -28,8 +28,8 @@ def get_customer_list(cust_list):
 	result = []
 	sales_user_cond = ''
 	if cust_list:
-		sales_user_cond = "where name in ({0})".format(','.join('"{0}"'.format(customer) for customer in cust_list))
-	result = frappe.db.sql("select name as customer_id,customer_name from `tabCustomer` {0}".format(sales_user_cond),as_dict=1)
+		sales_user_cond = "where cu.name in ({0})".format(','.join('"{0}"'.format(customer) for customer in cust_list))
+	result = frappe.db.sql("select cu.name as customer_id,cu.customer_name, ifnull((select concat_ws('\n',ad.address_line1,ad.address_line2,ad.city,ad.state,ad.pincode,ad.country,ad.email_id,ad.phone) from `tabAddress` as ad where  cu.name = ad.customer and ad.is_shipping_address = 1 limit 1 ),'')as cust_address from `tabCustomer` as cu {0}".format(sales_user_cond),as_dict=1)
 	return result
 
 @frappe.whitelist(allow_guest=True)

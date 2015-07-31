@@ -73,8 +73,9 @@ def create_so_and_po(order_dict,email,sync=None):
 		if cint(sync) == 1:
 			create_spos_sync_record()
 		frappe.session.user = 'Administrator' if email == 'administrator' else email
-		so_flag = create_sales_order(order_dict)
-		po_flag = create_purchase_order(order_dict)
+		letter_head = frappe.db.get_value("Supplier",order.values()[0]['supplier'],'letter_head')
+		so_flag = create_sales_order(order_dict,letter_head)
+		po_flag = create_purchase_order(order_dict,letter_head)
 		if so_flag == True and po_flag == True:
 			check_spos_log_already_exists(order.keys()[0])
 			return "success"
@@ -89,13 +90,14 @@ def create_so_and_po(order_dict,email,sync=None):
 	return "fail"					
 
 @frappe.whitelist(allow_guest=True)
-def create_sales_order(order_dict):
+def create_sales_order(order_dict,letter_head):
 	order = json.loads(order_dict)
 	if not frappe.db.get_value("Sales Order",{"pos_timestamp":order.keys()[0]},"name"):
 		so_doc = frappe.new_doc("Sales Order")
 		order_dict = order.values()[0]
 		order_dict["delivery_date"] =  nowdate()
 		order_dict["pos_timestamp"] = order.keys()[0]
+		order_dict["letter_head"] = letter_head 
 		so_doc.update(order_dict)
 		so_doc.flags.ignore_permissions = 1
 		try:
@@ -113,13 +115,14 @@ def create_sales_order(order_dict):
 
 
 @frappe.whitelist(allow_guest=True)
-def create_purchase_order(order_dict):
+def create_purchase_order(order_dict,letter_head):
 	order = json.loads(order_dict)
 	if not frappe.db.get_value("Purchase Order",{"pos_timestamp":order.keys()[0]},"name"):
 		po_doc = frappe.new_doc("Purchase Order")
 		order_dict = order.values()[0]
 		order_dict = add_req_by_date_in_child_table(order_dict)
 		order_dict["pos_timestamp"] = order.keys()[0]
+		order_dict["letter_head"] = letter_head
 		order_dict.pop("selling_price_list",None)
 		po_doc.update(order_dict)
 		po_doc.flags.ignore_permissions = 1

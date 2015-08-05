@@ -56,7 +56,7 @@ def get_item_list(sales_user):
 		pos_price_list = result[0][0] 
 	item_data = {}
 	item_data['price_list'] = pos_price_list
-	item_data['item_list'] = frappe.db.sql(""" select it.name as item_code,it.description as item_description,it.item_group,
+	item_data['item_list'] = frappe.db.sql(""" select it.name as item_code,it.description as item_description,it.item_group,it.barcode,
 		ifnull( (select ip.price_list_rate
 			from `tabItem Price` as ip
 			where ip.price_list = '{0}'

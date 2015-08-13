@@ -97,7 +97,8 @@ def create_sales_order(order_dict,letter_head):
 		order_dict = order.values()[0]
 		order_dict["delivery_date"] =  nowdate()
 		order_dict["pos_timestamp"] = order.keys()[0]
-		order_dict["letter_head"] = letter_head 
+		order_dict["letter_head"] = letter_head
+		order_dict['sales_user'] = frappe.db.get_value('User', frappe.session.user, 'first_name')
 		so_doc.update(order_dict)
 		so_doc.flags.ignore_permissions = 1
 		try:
@@ -122,6 +123,7 @@ def create_purchase_order(order_dict,letter_head):
 		order_dict = order.values()[0]
 		order_dict = add_req_by_date_in_child_table(order_dict)
 		order_dict["pos_timestamp"] = order.keys()[0]
+		order_dict["account_number"] = get_supplier_account_no(order_dict)
 		order_dict["letter_head"] = letter_head
 		order_dict.pop("selling_price_list",None)
 		po_doc.update(order_dict)
@@ -185,4 +187,10 @@ def create_spos_sync_record():
 
 @frappe.whitelist(allow_guest=True)
 def check_for_connectivity():
-	return "success"	
+	return "success"
+
+def get_supplier_account_no(order_dict):
+	acc_no = frappe.db.sql("""select account_number from `tabSupplier Account Number` 
+		where parent = '%(customer)s' and supplier = '%(supplier)s'"""%(order_dict), as_list=1)
+	
+	return (len(acc_no[0]) > 1 and acc_no[0] or acc_no[0][0]) if acc_no else ''

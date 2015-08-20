@@ -60,7 +60,7 @@ def get_item_list(sales_user):
 		ifnull( (select ip.price_list_rate
 			from `tabItem Price` as ip
 			where ip.price_list = '{0}'
-			and ip.item_code = it.item_code
+			and ip.item_code = it.name
 			),0.0 ) as cost
 	from `tabItem` it""".format(pos_price_list),as_dict=1)
 	return item_data
